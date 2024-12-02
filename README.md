@@ -379,6 +379,8 @@ python visualize_confusion.py
 
    If is_detector is set to 'true', ensure that the detector model is properly integrated with the classifier. The detection results should be correctly passed to the classifier for subsequent classification.
 
+   
+
 ## References
 
 1. Wang, Ao, et al. "YOLOv10: Real-Time End-to-End Object Detection." *arXiv preprint arXiv:2405.14458* (2024). 
