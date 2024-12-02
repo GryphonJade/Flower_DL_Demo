@@ -1,0 +1,43 @@
+mode: train
+data_source:
+  type: local
+  package: some-ai-community-dataset
+  dataset_name: flower_dataset
+  download: false
+detector:
+  model_name: yolov10n
+  pretrained: true
+  model_path: models/yolov10/yolov10n.pt
+  expected_type_id: '80'
+classifier:
+  model_type: custom
+  model_module: models.custom.custom_model
+  model_name: ResNet9
+  class_name: ResNet9
+  model_path: models/ResNet9/classifier.pth
+  pretrained: True
+  class_mapping_path: models/ResNet9/class_mapping.json
+training:
+  data_dir: data
+  temp_dir: data/temp
+  batch_size: 32
+  num_epochs: 10
+  optimizer:
+    type: SGD
+    lr: 0.01
+    weight_decay: 0
+    momentum: 0.9
+  device: mps
+  is_detector: 'false'
+  confusion_path: training/ResNet9/confusion_matrices.json
+  metrics_path: training/ResNet9/metrics.json
+  confusion_output_dir: visualizations/ResNet9/confusion_matrices
+  metrics_output_dir: visualizations/ResNet9/metrics
+  save_path: models/ResNet9/classifier.pth
+  best_model_path: models/ResNet9/f1best.pth
+
+prediction:
+  predict_dir: data/train/Scab
+  output_dir: predict/results
+  device: mps
+  is_detector: 'false'
