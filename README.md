@@ -64,7 +64,7 @@ A YOLO + CNN network can be used to build a large-scale visual diagnosis platfor
   
 - **CNN**: The Convolutional Neural Network (CNN) is designed, trained, and fine-tuned specifically for tasks like plant disease diagnosis to achieve high-accuracy predictions. After detection, crop the identified regions and pass them to a CNN for detailed classification. 
 
-  <img src="/Users/ryangao/Documents/python/a-cnn-sequence-to-classify-handwritten-digits.webp" alt="a-cnn-sequence-to-classify-handwritten-digits" style="zoom:50%;" />
+  <img src="./images/image1.png" alt="CNN" style="zoom:50%;" />
 
   Source: https://saturncloud.io/blog/a-comprehensive-guide-to-convolutional-neural-networks-the-eli5-way/
 
