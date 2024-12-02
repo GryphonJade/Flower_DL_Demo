@@ -29,26 +29,26 @@ class CustomDataset(Dataset):
         self.labels = []
         self.transform = transform
         self.class_to_idx = class_to_idx
-        self.confusion_matrices = [] # to record training performance
+        self.confusion_matrices = []  # to record training performance
 
-        # 过滤掉隐藏文件夹
+        # Filter out hidden folders
         classes = sorted([
             cls for cls in os.listdir(data_dir)
             if not cls.startswith('.') and os.path.isdir(os.path.join(data_dir, cls))
         ])
 
-        print(f"CustomDataset: Classes found: {classes}")  # 调试输出
+        print(f"CustomDataset: Classes found: {classes}")  # Debug output
 
         for cls_name in classes:
             cls_path = os.path.join(data_dir, cls_name)
-            #print(f"CustomDataset: Processing class: {cls_name}")  # 调试输出
+            # print(f"CustomDataset: Processing class: {cls_name}")  # Debug output
 
-            # 过滤掉隐藏文件
+            # Filter out hidden files
             img_names = sorted([
                 img for img in os.listdir(cls_path)
                 if not img.startswith('.') and os.path.isfile(os.path.join(cls_path, img))
             ])
-            #print(f"CustomDataset: Found {len(img_names)} images for class '{cls_name}'")  # 调试输出
+            # print(f"CustomDataset: Found {len(img_names)} images for class '{cls_name}'")  # Debug output
 
             for img_name in img_names:
                 img_path = os.path.join(cls_path, img_name)
@@ -65,21 +65,23 @@ class CustomDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         return image, label
+
+
 class CustomNetwork:
     def __init__(self, mode, detector_cfg, classifier_cfg, training_cfg=None, prediction_cfg=None,
                  data_source_cfg=None):
         self.mode = mode
         self.device = 'cpu'
 
-        # 初始化类别映射
+        # Initialize class mapping
         self.class_to_idx = {}
         self.idx_to_class = {}
 
-        # 初始化数据源
+        # Initialize data source
         self.data_source_cfg = data_source_cfg
         self._init_data_source()
 
-        # 根据模式和配置文件设置设备
+        # Set device based on mode and configuration
         if self.mode == 'train' and training_cfg is not None:
             self.training_cfg = training_cfg
             self.device = training_cfg.get('device', 'cpu')
@@ -91,22 +93,22 @@ class CustomNetwork:
         else:
             raise ValueError("Invalid mode or missing configuration.")
 
-        # 存储分类器配置
+        # Store classifier configuration
         self.classifier_cfg = classifier_cfg
 
-        # 初始化检测器
+        # Initialize detector
         self._init_detector(detector_cfg)
 
-        # 初始化动态分类器
+        # Initialize dynamic classifier
         self._init_classifier_dynamic()
 
-        # 初始化处理器
+        # Initialize processor
         self._init_processor()
-        # 初始化记录列表
+        # Initialize recording lists
         self.confusion_matrices = []
         self.accuracies = []
         self.f1_scores = []
-        # 将模型移动到指定设备
+        # Move model to specified device
         self.classifier.to(self.device)
         if self.mode == 'predict':
             self.detector.to(self.device)
@@ -115,19 +117,19 @@ class CustomNetwork:
         model_name = detector_cfg.get('model_name', 'yolov5s')
         pretrained = detector_cfg.get('pretrained', True)
         model_path = detector_cfg.get('model_path', None)
-        
+
         self.expected_type_id = detector_cfg.get('expected_type_id', '80')
         if model_name.startswith('yolov10'):
-            self.detector = YOLOv10(model_path,verbose=False)
+            self.detector = YOLOv10(model_path, verbose=False)
         elif model_name.startswith('yolov5'):
-            self.detector = torch.hub.load('ultralytics/yolov5', model_name, pretrained=pretrained,verbose=False)
-        
-        # to_device
+            self.detector = torch.hub.load('ultralytics/yolov5', model_name, pretrained=pretrained, verbose=False)
+
+        # Move to device
         self.detector.to(self.device)
 
     def _init_classifier_dynamic(self):
         if self.mode != 'train':
-            # 在预测模式下，加载类别映射
+            # In prediction mode, load class mapping
             class_mapping_path = self.classifier_cfg.get('class_mapping_path', 'models/resnet18/class_mapping.json')
             if not os.path.exists(class_mapping_path):
                 raise ValueError(
@@ -138,7 +140,7 @@ class CustomNetwork:
             num_classes = len(self.class_to_idx)
             print(f"Loaded {num_classes} classes: {self.class_to_idx}")
         else:
-            # 读取训练数据以确定类别数，排除 .DS_Store 等隐藏文件
+            # Read training data to determine the number of classes, excluding hidden files like .DS_Store
             train_dir = os.path.join(self.training_cfg['data_dir'], 'train')
             classes = sorted(
                 [cls for cls in os.listdir(train_dir) if not cls.startswith('.')]
@@ -148,8 +150,8 @@ class CustomNetwork:
             num_classes = len(classes)
             print(f"Detected {num_classes} classes: {self.class_to_idx}")
 
-        # 初始化分类器
-        model_type = self.classifier_cfg.get('model_type', 'torchvision')  # 'torchvision' 或 'custom'
+        # Initialize classifier
+        model_type = self.classifier_cfg.get('model_type', 'torchvision')  # 'torchvision' or 'custom'
         model_name = self.classifier_cfg.get('model_name', 'resnet18')
 
         if model_type == 'torchvision':
@@ -161,10 +163,10 @@ class CustomNetwork:
             if not pretrained:
                 print(f"Initializing {model_name} without pretrained weights.")
 
-            # 自动修改最后一层以适应分类任务
+            # Automatically modify the last layer to fit the classification task
             self._modify_last_layer(model_name, num_classes)
 
-            # 如果提供了 model_path，则加载模型权重
+            # If model_path is provided, load model weights
             if model_path and os.path.exists(model_path):
                 try:
                     self.classifier.load_state_dict(torch.load(model_path, map_location=self.device))
@@ -174,7 +176,7 @@ class CustomNetwork:
             else:
                 print(f"No model weights found at {model_path}. Using randomly initialized weights.")
         elif model_type == 'custom':
-            # 加载自定义模型
+            # Load custom model
             model_module = self.classifier_cfg.get('model_module', None)
             class_name = self.classifier_cfg.get('class_name', None)
 
@@ -184,8 +186,8 @@ class CustomNetwork:
             try:
                 custom_module = importlib.import_module(model_module)
                 CustomModelClass = getattr(custom_module, class_name)
-                # 假设自定义模型的初始化参数为 in_channels 和 num_classes
-                in_channels = 3  # 默认输入通道数，可以根据需要调整或在配置中指定
+                # Assume the custom model's initialization parameters are in_channels and num_classes
+                in_channels = 3  # Default input channels, can be adjusted or specified in the config
                 self.classifier = CustomModelClass(in_channels=in_channels, num_classes=num_classes)
                 print(f"Initialized custom model '{class_name}' from module '{model_module}'")
             except ImportError as e:
@@ -195,10 +197,10 @@ class CustomNetwork:
             except Exception as e:
                 raise Exception(f"Failed to initialize custom model '{class_name}': {e}")
 
-            # 自动修改自定义模型的最后一层
+            # Automatically modify the last layer of the custom model
             self._modify_last_layer_custom(class_name, num_classes)
 
-            # 如果提供了 model_path，则加载模型权重
+            # If model_path is provided, load model weights
             model_path = self.classifier_cfg.get('model_path', None)
             if model_path and os.path.exists(model_path):
                 try:
@@ -211,15 +213,15 @@ class CustomNetwork:
         else:
             raise ValueError(f"Unsupported model_type: {model_type}. Must be 'torchvision' or 'custom'.")
 
-        # 将分类器移动到指定设备
+        # Move classifier to specified device
         self.classifier.to(self.device)
 
-        # 打印 class_to_idx 映射
+        # Print class_to_idx mapping
         print("Class to Index Mapping:")
         for class_name, index in self.class_to_idx.items():
             print(f"{class_name}: {index}")
 
-        # 如果是训练模式，保存类别映射
+        # If in training mode, save class mapping
         if self.mode == 'train':
             class_mapping_path = self.classifier_cfg.get('class_mapping_path', 'models/resnet18/class_mapping.json')
             os.makedirs(os.path.dirname(class_mapping_path), exist_ok=True)
@@ -229,17 +231,17 @@ class CustomNetwork:
 
     def _modify_last_layer_custom(self, class_name, num_classes):
         """
-        自动修改自定义模型的最后一层以适应分类任务。
-        假设自定义模型的最后一层名称为 'classifier' 或 'fc'。
+        Automatically modifies the last layer of the custom model to fit the classification task.
+        Assumes that the custom model's last layer is named 'classifier' or 'fc'.
         """
         try:
             if hasattr(self.classifier, 'classifier'):
-                # 适用于类似 ResNet9 的模型
+                # Suitable for models like ResNet9
                 in_features = self.classifier.classifier[-1].in_features
                 self.classifier.classifier[-1] = nn.Linear(in_features, num_classes)
                 print(f"Modified 'classifier' layer of custom model '{class_name}' to output {num_classes} classes.")
             elif hasattr(self.classifier, 'fc'):
-                # 适用于其他可能的模型
+                # Suitable for other potential models
                 in_features = self.classifier.fc.in_features
                 self.classifier.fc = nn.Linear(in_features, num_classes)
                 print(f"Modified 'fc' layer of custom model '{class_name}' to output {num_classes} classes.")
@@ -261,14 +263,16 @@ class CustomNetwork:
         else:
             raise ValueError(
                 f"Model architecture for {model_name} is not supported. Please update the _modify_last_layer method.")
+
     def _init_processor(self):
         self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
-            # 如果需要，添加归一化
+            # Add normalization if needed
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                               std=[0.229, 0.224, 0.225]),
+                                 std=[0.229, 0.224, 0.225]),
         ])
+
     def _init_data_source(self):
         data_source = self.data_source_cfg
         data_type = data_source.get('type', 'local')
@@ -279,15 +283,15 @@ class CustomNetwork:
             download = data_source.get('download', False)
 
             if download:
-                # 安装指定的pip包
+                # Install specified pip package
                 print(f"Installing package: {package}")
                 subprocess.check_call([sys.executable, '-m', 'pip', 'install', package])
                 print(f"Package {package} installed successfully.")
 
-            # 动态导入数据集模块
+            # Dynamically import dataset module
             try:
                 dataset_module = importlib.import_module(dataset_name)
-                self.dataset = dataset_module.get_dataset()  # 假设数据集模块有一个 get_dataset 方法
+                self.dataset = dataset_module.get_dataset()  # Assumes the dataset module has a get_dataset method
                 self.training_cfg['data_dir'] = self.dataset.get_data_dir()
                 print(f"Online dataset {dataset_name} loaded successfully.")
             except ImportError as e:
@@ -295,7 +299,7 @@ class CustomNetwork:
             except AttributeError:
                 raise AttributeError(f"The dataset module {dataset_name} must have a 'get_dataset' method.")
         elif data_type == 'local':
-            # 使用本地数据，路径已在训练配置中指定
+            # Use local data, path is already specified in training configuration
             print("Using local dataset.")
         else:
             raise ValueError("data_source.type must be 'local' or 'online'.")
@@ -303,24 +307,24 @@ class CustomNetwork:
     def split_dataset(self, data_dir, output_dir, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
         print(f"Splitting dataset. Data directory: {data_dir}")
 
-        # 获取所有非隐藏且为目录的类名
+        # Get all class names that are not hidden and are directories
         classes = [
             cls for cls in os.listdir(data_dir)
             if not cls.startswith('.') and os.path.isdir(os.path.join(data_dir, cls))
         ]
 
-        print(f"Classes found: {classes}")  # 调试输出
+        print(f"Classes found: {classes}")  # Debug output
 
         for cls in classes:
             cls_path = os.path.join(data_dir, cls)
 
-            # 获取所有非隐藏且为文件的图像文件名
+            # Get all image filenames that are not hidden and are files
             images = [
                 img for img in os.listdir(cls_path)
                 if not img.startswith('.') and os.path.isfile(os.path.join(cls_path, img))
             ]
 
-            print(f"Found {len(images)} images for class '{cls}'")  # 调试输出
+            print(f"Found {len(images)} images for class '{cls}'")  # Debug output
 
             random.shuffle(images)
             total = len(images)
@@ -345,8 +349,7 @@ class CustomNetwork:
 
     def process_detections(self, image, detections):
         cropped_images = []
-        
-        
+
         # Iterate over the detections (now using the 'data' field)
         for detection_all in detections:
             detection = detection_all.data
@@ -354,16 +357,16 @@ class CustomNetwork:
                 continue
             # Unpack detection values (x_min, y_min, x_max, y_max, conf, cls)
             x_min, y_min, x_max, y_max, conf, cls = detection
-            
+
             # Crop the image using the bounding box
             cropped_img = image.crop((x_min, y_min, x_max, y_max))
-            
+
             # Apply the transformation
             cropped_img = self.transform(cropped_img)
-            
+
             # Append the processed image to the list
             cropped_images.append(cropped_img)
-        
+
         # If there are cropped images, stack them into a tensor, otherwise return None
         if cropped_images:
             return torch.stack(cropped_images)
@@ -371,29 +374,29 @@ class CustomNetwork:
             return None
 
     def train(self):
-        # 获取训练配置
-        base_data_dir = self.training_cfg.get('data_dir')  # 基础数据目录，应该是 'data'
-        data_dir = os.path.join(base_data_dir, 'train')  # 实际包含类别子目录的训练数据目录
+        # Get training configuration
+        base_data_dir = self.training_cfg.get('data_dir')  # Base data directory, should be 'data'
+        data_dir = os.path.join(base_data_dir, 'train')  # Actual training data directory containing class subdirectories
         output_dir = self.training_cfg.get('temp_dir', 'data/temp')
 
-        print(f"Training with train_data_dir: {data_dir}, output_dir: {output_dir}")  # 调试输出
+        print(f"Training with train_data_dir: {data_dir}, output_dir: {output_dir}")  # Debug output
 
-        # 数据集划分
+        # Split dataset
         if not os.path.exists(output_dir):
             self.split_dataset(data_dir, output_dir)
             print("Dataset split successfully.")
         else:
-            shutil.rmtree(output_dir)  # 递归删除非空目录
+            shutil.rmtree(output_dir)  # Recursively delete non-empty directory
             self.split_dataset(data_dir, output_dir)
             print("Dataset split successfully.")
 
-        # 定义数据集和数据加载器
+        # Define datasets and data loaders
         train_loader, val_loader = self._get_data_loaders(output_dir, self.training_cfg.get('batch_size', 32))
 
-        # 定义损失函数
+        # Define loss function
         criterion = nn.CrossEntropyLoss()
 
-        # 动态选择优化器
+        # Dynamically select optimizer
         optimizer_cfg = self.training_cfg.get('optimizer', {})
         optimizer_type = optimizer_cfg.get('type', 'SGD')
         lr = optimizer_cfg.get('lr', 0.001)
@@ -424,18 +427,18 @@ class CustomNetwork:
         else:
             raise ValueError(f"Unsupported optimizer type: {optimizer_type}")
 
-        print(f"Using optimizer: {optimizer_type} with parameters: {optimizer_cfg}")  # 调试输出
+        print(f"Using optimizer: {optimizer_type} with parameters: {optimizer_cfg}")  # Debug output
 
         num_epochs = self.training_cfg.get('num_epochs', 10)
 
         best_f1 = 0.0
         best_model_path = self.training_cfg.get('best_model_path', 'models/resnet18/best_classifier.pth')
 
-        # 训练循环
+        # Training loop
         for epoch in range(num_epochs):
             self.classifier.train()
             for batch_idx, (images, labels) in enumerate(train_loader):
-                # 将数据迁移到设备
+                # Move data to device
                 inputs = images.to(self.device)
                 labels = labels.to(self.device)
 
@@ -445,7 +448,7 @@ class CustomNetwork:
                 loss.backward()
                 optimizer.step()
 
-                # 计算并打印进度
+                # Calculate and print progress
                 if (batch_idx + 1) % max(1, len(train_loader) // 10) == 0:
                     print(
                         f'Epoch [{epoch + 1}/{num_epochs}], Step [{batch_idx + 1}/{len(train_loader)}], Loss: {loss.item():.4f}')
@@ -474,20 +477,20 @@ class CustomNetwork:
 
             avg_val_loss = val_loss / len(val_loader)
             val_accuracy = 100 * correct / total
-            f1 = f1_score(all_labels, all_preds, average='weighted')  # 计算加权 F1 分数
-            f1percent=f1*100
+            f1 = f1_score(all_labels, all_preds, average='weighted')  # Calculate weighted F1 score
+            f1percent = f1 * 100
             print(
                 f'Epoch [{epoch + 1}/{num_epochs}], Validation Loss: {avg_val_loss:.4f}, Validation Accuracy: {val_accuracy:.2f}%, F1 Score: {f1percent:.2f}%')
 
-            # 计算混淆矩阵
+            # Compute confusion matrix
             cm = confusion_matrix(all_labels, all_preds)
-            self.confusion_matrices.append(cm.tolist())  # 转换为列表以便JSON序列化
+            self.confusion_matrices.append(cm.tolist())  # Convert to list for JSON serialization
             self.accuracies.append(val_accuracy)
             self.f1_scores.append(f1)
             print(f'Confusion Matrix for Epoch {epoch + 1}:')
             print(cm)
 
-            # 保存模型
+            # Save model
             save_path = self.training_cfg.get('save_path', 'classifier.pth')
             torch.save(self.classifier.state_dict(), save_path)
             print(f"Model saved to {save_path}\n")
@@ -496,7 +499,7 @@ class CustomNetwork:
                 torch.save(self.classifier.state_dict(), best_model_path)
                 print(f"Best model saved to {best_model_path} with F1 Score: {best_f1:.2f}")
 
-            # 保存所有混淆矩阵和指标到JSON文件
+            # Save all confusion matrices and metrics to JSON file
             metrics_path = self.training_cfg.get('metrics_path', 'training/metrics.json')
             metrics = {
                 'confusion_matrices': self.confusion_matrices,
@@ -510,22 +513,22 @@ class CustomNetwork:
         print("Training complete!")
 
     def predict(self):
-        import csv  # 确保在predict方法内导入csv模块
+        import csv  # Ensure csv module is imported within predict method
 
-        # 设置分类器为评估模式
+        # Set classifier to evaluation mode
         self.classifier.eval()
 
-        # 获取预测配置
+        # Get prediction configuration
         predict_dir = self.prediction_cfg.get('predict_dir')
         output_dir = self.prediction_cfg.get('output_dir')
         os.makedirs(output_dir, exist_ok=True)
 
-        # 获取是否使用检测器的配置
+        # Get whether to use detector from configuration
         is_detector = self.prediction_cfg.get('is_detector', 'false').lower() == 'true'
 
         image_names = os.listdir(predict_dir)
 
-        # 列表用于存储所有预测结果
+        # List to store all prediction results
         predictions_list = []
 
         for img_name in image_names:
@@ -533,29 +536,29 @@ class CustomNetwork:
             image = Image.open(img_path).convert('RGB')
 
             if is_detector:
-                # 执行检测
+                # Perform detection
                 results = self.detector(image)
 
-                # 确保 results 是列表且不为空
+                # Ensure results is a list and not empty
                 if isinstance(results, list) and len(results) > 0:
-                    # 正确访问 detections
-                    detections = results[0].boxes  # 根据YOLOv10的输出调整
+                    # Correctly access detections
+                    detections = results[0].boxes  # Adjust based on YOLOv10's output
                     print(f"Detections for {img_name}: {detections}")
                 else:
                     detections = []
                     print(f"No detections for {img_name}")
 
-                # 数据处理
+                # Data processing
                 inputs = self.process_detections(image, detections)
                 if inputs is None:
                     print(f"No valid detections to classify for {img_name}")
                     continue
             else:
-                # 不使用检测器，直接使用整个图像
+                # Do not use detector, use the entire image
                 inputs = self.transform(image).unsqueeze(0).to(self.device)
                 print(f"Using entire image for classification: {img_name}")
 
-            # 预测
+            # Prediction
             outputs = self.classifier(inputs)
             probabilities = torch.nn.functional.softmax(outputs, dim=1)
 
@@ -563,16 +566,16 @@ class CustomNetwork:
                 prob, pred = probabilities[i].max(0)
                 class_num = pred.item()
                 class_name = self.idx_to_class.get(class_num, "Unknown")
-                probability = prob.item() * 100  # 转换为百分比
+                probability = prob.item() * 100  # Convert to percentage
 
-                # 将预测结果添加到列表中
+                # Add prediction result to list
                 predictions_list.append({
                     'class_number': class_num,
                     'class_name': class_name,
                     'probability': f"{probability:.2f}%"
                 })
 
-        # 将所有预测结果写入CSV文件
+        # Write all prediction results to CSV file
         csv_path = os.path.join(output_dir, 'predictions.csv')
         with open(csv_path, 'w', newline='', encoding='utf-8') as csvfile:
             fieldnames = ['class_number', 'class_name', 'probability']
@@ -584,7 +587,7 @@ class CustomNetwork:
         print(f"Saved all predictions to {csv_path}")
 
     def _get_data_loaders(self, data_dir, batch_size):
-        # 使用顶层定义的 CustomDataset 类
+        # Use the CustomDataset class defined above
         train_dataset = CustomDataset(
             os.path.join(data_dir, 'train'),
             transform=self.transform,
@@ -603,19 +606,19 @@ class CustomNetwork:
 
     def _process_batch(self, images):
         inputs = []
-        #print(len(images))
+        # print(len(images))
         for img_tensor in images:
             img = transforms.ToPILImage()(img_tensor)
-            #print(self.detector.verbose)
+            # print(self.detector.verbose)
             detections = []
-            results = self.detector(img,verbose=False)
-            if ((self.mode == 'train' and self.training_cfg.get('is_detector')=='true') or
-                    (self.mode=='prediction' and self.prediction_cfg.get('is_detector')=='true')):
-            # 使用 results.boxes 获取检测框
+            results = self.detector(img, verbose=False)
+            if ((self.mode == 'train' and self.training_cfg.get('is_detector') == 'true') or
+                    (self.mode == 'prediction' and self.prediction_cfg.get('is_detector') == 'true')):
+                # Use results.boxes to get bounding boxes
                 detections = results[0].boxes
-            
+
             if detections is not None and len(detections) > 0:
-                detections = detections.cpu().numpy()  # 转换为 numpy 数组
+                detections = detections.cpu().numpy()  # Convert to numpy array
                 input_tensor = self.process_detections(img, detections)
                 if input_tensor is not None and len(input_tensor) == 1:
                     inputs.append(input_tensor)
@@ -623,22 +626,20 @@ class CustomNetwork:
                     input_tensor = self.transform(img).unsqueeze(0)
                     inputs.append(input_tensor)
             else:
-                # 如果没有检测到对象，将整个图像传入分类器
-                input_tensor = self.transform(img).unsqueeze(0)  # 添加一个维度，确保 batch size 为 1
+                # If no objects detected, pass the entire image to the classifier
+                input_tensor = self.transform(img).unsqueeze(0)  # Add a dimension to ensure batch size of 1
                 inputs.append(input_tensor)
-        
+
         if not inputs:
             return None
-        
-        # 合并所有图像的输入，形成一个大的 batch
-        # 确保输入张量的维度一致
+
+        # Combine all image inputs to form a large batch
+        # Ensure input tensors have consistent dimensions
         inputs = torch.cat(inputs, dim=0)
-        #print(f"Inputs shape: {inputs.shape}")
-        
-        # 返回输入时，确保返回的数据是一个批次
+        # print(f"Inputs shape: {inputs.shape}")
+
+        # Return input ensuring data is a single batch
         return inputs.to(self.device)
-
-
 
     def run(self):
         if self.mode == 'train':
