@@ -3,22 +3,20 @@
 ## Table of Contents
 
 1. [Useful Guidebooks](#1-useful-guidebooks)
-
 2. [Trending Communities](#2-trending-communities)
-
 3. [Relevant Data Sources](#3-relevant-data-sources)
-
 4. [Possible Model Framework](#4-possible-model-framework)
 
-5. [Model Workflow](#5-model-workflow)
+5. **[Model Workflow](#5-model-workflow)**
 
-6. [Environment Setup](#6-environment-setup)
+5. **[Environment Setup](#6-environment-setup)**
 
-7. [Model Training](#7-model-training)
+7. **[Model Training](#7-model-training)**
 
-8. [Getting Started Guide](#8-getting-started-guide)
+8. [**Quick Starting Guide**](#8-quick-starting-guide)
 
-   [References](#9-references)
+9. [Notes](#notes)
+10. [References](#references)
 
 ## 1. Useful Guidebooks
 **D2L.ai**: An interactive deep learning book that integrates multiple frameworks, mathematical explanations, and discussions. It's highly suitable for both beginners and advanced practitioners.
@@ -105,13 +103,11 @@ A YOLO + CNN network can be used to build a large-scale visual diagnosis platfor
 1. **Install necessary Python packages**：
 
    ```bash
-   pip install numpy pandas matplotlib seaborn opencv-python Pillow
-   pip install torch torchvision torchaudio
-   pip install PIL
+   pip install pyyaml matplotlib seaborn numpy requests torch torchvision ultralytics Pillow scikit-learn
    ...
    # install other packages if needed
    ```
-
+   
 2. **Enable hardware acceleration**：
 
    - For Windows: Install *CUDA* ([https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads))  
@@ -225,7 +221,7 @@ A python project is attached with this document, which can be served as a sample
 
 3. Edit the configuration
 
-   `config.yaml` is located at the main dicretory of the example project. It determines the mode of operation of the model and can be set as needed.
+   `config.yaml` is located at the main dicretory of the example project. It determines the mode of operation of the model and can be set as needed. 
 
    **Example Training Configuration **：
 
@@ -334,24 +330,36 @@ A python project is attached with this document, which can be served as a sample
    ...
    ```
 
-5. Run the code
+5. Debugging
 
-   ```shell
-   python auto_update
-   python main.py
-   ```
+   You can customize the entire demo by modifying or adding classes and methods in `models/custom_network/custom_network.py`. This file is **the core file of the demo** and generally does not need to be modified. However, all the core functions are defined in this file such that it is useful for learning the architecture of this project.
 
-​	Run the above Python files to train or predict. Then, run the following Python file to visualize the training 	process and confusion matrix. 
+6. **Run the code**
 
-```shell
-python visualize_confusion.py
-```
+   To train or predict using the project, execute the following Python scripts in the specified order:
 
-<img src="./images/image-20241202030002264.png" alt="image-20241202030002264" style="zoom:67%;" />
+   - The ` auto_update_config.py` script automatically updates the project’s configuration settings based on the latest changes or predefined parameters. This ensures that the model utilizes the most current configurations before training or prediction.
 
-<img src="./images/image-20241202144808755.png" alt="image-20241202144808755" style="zoom: 67%;" />
+     ```
+     python auto_update_config.py
 
-### c) Other Detailed Information & tips
+   - After updating the configuration, run the main application to start training or prediction.
+
+     ```
+     python main.py
+     ```
+
+   - Once training is complete, visualize the results using the following script:
+
+     ```
+     python visualize_confusion.py
+     ```
+
+<img src="./images/image-20241202030002264.png" alt="image-20241202030002264" style="zoom:75%;" />
+
+<img src="./images/image-20241202144808755.png" alt="image-20241202144808755" style="zoom: 75%;" />
+
+### c) Other Detailed Information & notes
 
 1. DataLoader
 
@@ -375,11 +383,19 @@ python visualize_confusion.py
      - This mapping is saved in a JSON file (class_mapping.json) within the model’s directory.
      - During prediction, the script loads this mapping to interpret the model’s output indices back to class names.
 
-3. Prediction Workflow:
+3. Prediction Workflow
 
    If is_detector is set to 'true', ensure that the detector model is properly integrated with the classifier. The detection results should be correctly passed to the classifier for subsequent classification.
 
-   
+4. Notes
+
+   \- This project is currently under active development, and some features have not undergone thorough testing yet. Specifically, the online dataset integration and the connection with the YOLO network are still in the experimental stages. Therefore, please use these functionalities with caution.
+
+   \- Most of the additional details that are not explicitly mentioned in this guide are documented through comments within the codebase. This ensures that you can gain a deeper understanding and customize the project as needed.
+
+   \- It is **highly recommended to clone this project using Git**. Cloning via Git allows you to automatically receive the latest updates and improvements as the project evolves, ensuring that your local repository stays up-to-date with minimal effort.
+
+   \- There may be instances of missing or incorrect citations within the project documentation and code comments. We apologize for any oversights and are committed to ensuring all sources are properly referenced in future updates. Additionally, some features may be implemented incorrectly or may not function as intended. We apologize for any inconvenience this may cause and appreciate your understanding as we continue to refine the project. 
 
 ## References
 
