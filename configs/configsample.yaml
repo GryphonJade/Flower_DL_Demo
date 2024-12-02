@@ -1,42 +1,57 @@
-mode: train
+# config.yaml
+# This configuration file defines the settings for training and deploying computer vision deep learning models.
+# It includes configurations for data sources, model architectures, training parameters, and prediction settings.
+
+
+mode: train  # Specifies the operation mode of the project. Options: 'train' or 'predict'.
+
+
 data_source:
-  type: local
-  package: some-ai-community-dataset
-  dataset_name: flower_dataset
-  download: false
+  type: local  # Type of data source. Options: 'local' or 'online'.
+  package: some-ai-community-dataset  # (Only relevant if type is 'online') The name of the dataset package to install.
+  dataset_name: flower_dataset  # (Only relevant if type is 'online') The name of the dataset to use.
+  download: false  # (Only relevant if type is 'online') Whether to download the dataset automatically.
+
+
 detector:
-  model_name: yolov10n
-  pretrained: true
-  model_path: models/yolov10/yolov10n.pt
-  expected_type_id: '80'
+  model_name: yolov10n  # The name of the YOLO model variant to use. Example: 'yolov10n'.
+  pretrained: true  # Indicates whether to use pretrained weights for the detector.
+  model_path: models/yolov10/yolov10n.pt  # Path to the YOLO model weights file.
+  expected_type_id: '80'  # (Optional) The class ID expected by the detector, based on the dataset's label mapping (e.g., COCO dataset).
+
+
 classifier:
-  model_type: custom
-  model_module: models.custom.custom_model
-  model_name: ResNet9
-  class_name: ResNet9
-  model_path: models/ResNet9/classifier.pth
-  pretrained: false
-  class_mapping_path: models/custom/class_mapping.json
+  model_type: custom  # Type of classifier model. Options: 'torchvision' for standard torchvision models or 'custom' for user-defined models.
+  model_module: models.custom.custom_model  # Python module path where the custom model class is defined. Must follow Python import conventions.
+  model_name: ResNet9  # Name of the model class to instantiate from the specified module.
+  class_name: ResNet9  # (Redundant with model_name; can be used interchangeably) Name of the classifier class.
+  model_path: models/ResNet9/classifier.pth  # Path to the classifier model weights file.
+  pretrained: true  # Indicates whether to use pretrained weights for the classifier.
+  class_mapping_path: models/ResNet9/class_mapping.json  # Path to the JSON file that maps class names to indices.
+
+
 training:
-  data_dir: data
-  temp_dir: data/temp
-  batch_size: 32
-  num_epochs: 10
+  data_dir: data  # Base directory where training data is stored.
+  temp_dir: data/temp  # Temporary directory for processing data splits (e.g., train/val/test).
+  batch_size: 32  # Number of samples per batch during training.
+  num_epochs: 10  # Total number of training epochs.
   optimizer:
-    type: SGD
-    lr: 0.001
-    weight_decay: 0
-    momentum: 0.9
-  device: mps
-  is_detector: 'false'
-  confusion_path: training/resnet34/confusion_matrices.json
-  metrics_path: training/resnet34/metrics.json
-  confusion_output_dir: visualizations/resnet34/confusion_matrices
-  metrics_output_dir: visualizations/resnet34/metrics
-  save_path: models/resnet34/classifier20.pth
-  best_model_path: models/resnet34/f1best.pth
+    type: SGD  # Type of optimizer to use. Options: 'SGD', 'Adam', 'RMSprop', etc.
+    lr: 0.01  # Learning rate for the optimizer.
+    weight_decay: 0  # Weight decay (L2 regularization) parameter.
+    momentum: 0.9  # Momentum parameter for SGD and RMSprop optimizers.
+  device: mps  # Hardware accelerator to use. Options: 'cpu', 'cuda' (NVIDIA GPU), 'mps' (Apple Metal Performance Shaders).
+  is_detector: 'false'  # Indicates whether to use the detector during training. Options: 'true' or 'false'.
+  confusion_path: training/ResNet9/confusion_matrices.json  # Path to save confusion matrices generated during training.
+  metrics_path: training/ResNet9/metrics.json  # Path to save performance metrics (accuracy, F1 score) generated during training.
+  confusion_output_dir: visualizations/ResNet9/confusion_matrices  # Directory to save visual representations of confusion matrices.
+  metrics_output_dir: visualizations/ResNet9/metrics  # Directory to save visual representations of performance metrics.
+  save_path: models/ResNet9/classifier.pth  # Path to save the latest classifier model weights after each epoch.
+  best_model_path: models/ResNet9/f1best.pth  # Path to save the best classifier model weights based on F1 score.
+
+## Prediction Configuration
 prediction:
-  predict_dir: data/train/Scab
-  output_dir: predict/results
-  device: mps
-  is_detector: 'false'
+  predict_dir: data/train/Scab  # Directory containing images to run predictions on.
+  output_dir: predict/results  # Directory to save prediction results (e.g., CSV files, annotated images).
+  device: mps  # Hardware accelerator to use for predictions. Options: 'cpu', 'cuda', 'mps'.
+  is_detector: 'false'  # Indicates whether to use the detector during prediction. Options: 'true' or 'false'.
