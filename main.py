@@ -24,7 +24,7 @@ def main():
         data_source_cfg=data_source_cfg
     )
 
-    # run
+    # 运行
     network.run()
 
 if __name__ == '__main__':
