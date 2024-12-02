@@ -195,9 +195,9 @@ A YOLO + CNN network can be used to build a large-scale visual diagnosis platfor
 
 Deploy the trained model locally to perform accurate diagnostics of plant health conditions in images. The forecast require relatively low computational resources thus can run without GPU acceleration.
 
-## 8. QUick Starting Guide
+## 8. Quick Starting Guide
 
-Attached is a python project, which can be served as a sample for learning and practice.
+A python project is attached with this document, which can be served as a sample for learning and practice.
 
 ### a) Prerequisites
 
