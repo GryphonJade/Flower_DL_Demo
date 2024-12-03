@@ -395,7 +395,9 @@ A python project is attached with this document, which can be served as a sample
 
    \- It is **highly recommended to clone this project using Git**. Cloning via Git allows you to automatically receive the latest updates and improvements as the project evolves, ensuring that your local repository stays up-to-date with minimal effort.
 
-   \- There may be instances of missing or incorrect citations within the project documentation and code comments. We apologize for any oversights and are committed to ensuring all sources are properly referenced in future updates. Additionally, some features may be implemented incorrectly or may not function as intended. We apologize for any inconvenience this may cause and appreciate your understanding as we continue to refine the project. 
+   \- There may be instances of missing citations within the project documentation and code comments. We apologize for any oversights and are committed to ensuring all sources are properly referenced in future updates. 
+
+
 
 ## References
 
